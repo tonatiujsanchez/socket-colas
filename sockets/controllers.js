@@ -1,24 +1,57 @@
+const TicketControl = require("../models/ticket-control")
+
+
+
+const ticketControl = new TicketControl()
 
 
 const socketController = ( socket ) => {
+        
+    //Cuando un nuevo cliente se conecte 
+    socket.emit('ultimo-ticket', `Ticket ${ticketControl.ultimo}`)
+    socket.emit('estado-actual', ticketControl.ultimos4)
+    
+    socket.emit('tickets-pendientes', ticketControl.tickets.length)
 
 
-    socket.on('mensaje-secreto', ( payload, callback )=>{
+    socket.on('siguiente-ticket', ( payload, callback )=>{
 
-        const id = `Este cliente tiene el ID :: ${ socket.id }`
+        const siguiente = ticketControl.siguiente()
+        callback( siguiente )
+        socket.broadcast.emit('ultimo-ticket', siguiente)
 
-        //Se envia una respuesta al mismo cliente que hace la petición 
-        callback(id)
+        socket.broadcast.emit('tickets-pendientes', ticketControl.tickets.length)       
+            
+    })
 
-        // Recibe le payload el mismo cliente qye lo envia
-        // socket.emit('msg-server', payload) 
+    socket.on('atender-ticket', ( { escritorio }, callback )=>{
+        if( !escritorio ){
+            return callback({
+                ok: false,
+                msg: 'El escritorio es obligatorio'
+            })
+        }
 
-        // Recibe le payload todos los cliente conectados, menos el que lo envias
-        socket.broadcast.emit('msg-server', payload)
+        const ticket = ticketControl.atenderTicket( escritorio )
+        
+        //Emitir cambios en los ultimos4
+        socket.broadcast.emit('estado-actual', ticketControl.ultimos4)
 
 
-        // Reciben el payload todos los cliente, incluyendo el lo envia :: Se necesite recibir el this.io del padre
-        // this.io.emit('msg-server', payload)
+        if( !ticket ){
+            return callback({
+                ok: false,
+                msg: 'No hay tickets pendientes'
+            })
+        }
+
+        socket.emit('tickets-pendientes', ticketControl.tickets.length)
+        socket.broadcast.emit('tickets-pendientes', ticketControl.tickets.length)
+        callback({
+            ok: true,
+            ticket
+        })
+
     })
 }
 
