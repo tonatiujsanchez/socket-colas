@@ -34,19 +34,15 @@ const socketController = ( socket ) => {
 
         const ticket = ticketControl.atenderTicket( escritorio )
         
-        if(ticketControl.tickets.length > 0){
-            //Emitir cambios en los ultimos4
-            socket.broadcast.emit('estado-actual', ticketControl.ultimos4)
-        }
-
-
-
         if( !ticket ){
             return callback({
                 ok: false,
                 msg: 'No hay tickets pendientes'
             })
         }
+
+        socket.broadcast.emit('estado-actual', ticketControl.ultimos4)
+
 
         socket.emit('tickets-pendientes', ticketControl.tickets.length)
         socket.broadcast.emit('tickets-pendientes', ticketControl.tickets.length)
