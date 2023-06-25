@@ -34,8 +34,11 @@ const socketController = ( socket ) => {
 
         const ticket = ticketControl.atenderTicket( escritorio )
         
-        //Emitir cambios en los ultimos4
-        socket.broadcast.emit('estado-actual', ticketControl.ultimos4)
+        if(ticketControl.tickets.length > 0){
+            //Emitir cambios en los ultimos4
+            socket.broadcast.emit('estado-actual', ticketControl.ultimos4)
+        }
+
 
 
         if( !ticket ){
